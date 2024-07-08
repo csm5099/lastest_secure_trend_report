@@ -1,6 +1,8 @@
 from bs4 import BeautifulSoup
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
+from googletrans import Translator
+
 
 
 def cal_trend():
@@ -11,7 +13,7 @@ def cal_trend():
 
     links=[]
 
-    for i in range(1,11):
+    for i in range(1,2):
         outter_url = f"http://www.dailysecu.com/news/articleList.html?page={i}&total=13290&box_idxno=&sc_section_code=S1N2&view_type=sm"
         outter_req = requests.get(outter_url, headers=headers)
         outter_soup = BeautifulSoup(outter_req.text, "lxml")
@@ -32,7 +34,18 @@ def cal_trend():
             if p_tag.text.startswith("▷") or p_tag.text.startswith("★"):
                 continue
             p += p_tag.text.strip()
-        articles.append(p)
+        articles.append(str(p))
+        
+        
+    translator = Translator()
+    i = 0
+    for index, article in enumerate(articles):
+        i+=1
+        print(i)
+        translated_article = translator.translate(f"{article}",src='ko', dest='en')
+        print(translated_article)
+        articles[index] = translated_article.text
+        
 
     # TF-IDF 벡터화 객체 생성
     vectorizer = TfidfVectorizer()
