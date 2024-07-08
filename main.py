@@ -4,27 +4,29 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
 
 
-
-def cal_trend():
-
+# 뉴스 페이지를 순회하며 뉴스의 링크를 수집
+def collect_links():
+    links = []
     headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
-        }
-
-    links=[]
-
-    for i in range(1,2):
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    for i in range(1, 11):
         outter_url = f"http://www.dailysecu.com/news/articleList.html?page={i}&total=13290&box_idxno=&sc_section_code=S1N2&view_type=sm"
         outter_req = requests.get(outter_url, headers=headers)
         outter_soup = BeautifulSoup(outter_req.text, "lxml")
         outter_tags = outter_soup.select(
             "#user-container > div > div > section > article > div > section > div > div > a"
-        )#user-container > div > div > section > article > div > section > div > div.list-dated
-        for outter_tag in outter_tags:
-            links.append(f"http://www.dailysecu.com{outter_tag.get("href")}")
-            
+        )
+        links += [f"http://www.dailysecu.com{tag.get('href')}" for tag in outter_tags]
+    return links
 
-    articles=[]
+
+# 뉴스의 본문을 수집
+def extract_descriptions(links):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    articles = []
     for link in links:
         inner_req = requests.get(link, headers=headers)
         inner_soup = BeautifulSoup(inner_req.text, "lxml")
@@ -35,20 +37,46 @@ def cal_trend():
                 continue
             p += p_tag.text.strip()
         articles.append(str(p))
-        
-        
-    translator = Translator()
+
+    return articles
+
+
+# tf-idf를 위해 내용을 영어로 번역함
+def translate_for_tfidf(articles):
+    translator = Translator(
+        service_urls=[
+            "translate.google.com",
+            "translate.google.co.kr",
+        ]
+    )
+
     i = 0
     for index, article in enumerate(articles):
-        i+=1
         print(i)
-        translated_article = translator.translate(f"{article}",src='ko', dest='en')
-        print(translated_article)
-        articles[index] = translated_article.text
-        
+        i += 1
+        try:
+            # 언어 감지
+            detected = translator.detect(article)
+            if detected is not None:
+                # 텍스트 번역
+                translated = translator.translate(article, src=detected.lang, dest="en")
+                if translated is not None:
+                    articles[index] = translated.text
+                else:
+                    print("Translation failed: No response from API.")
+            else:
+                print("Language detection failed: No response from API.")
 
+        except Exception as e:
+            print(f"An error occurred: {e}")
+
+    return articles
+
+
+# 단어의 중요도를 평가하기위한 tf-idf
+def cal_tfidf(articles):
     # TF-IDF 벡터화 객체 생성
-    vectorizer = TfidfVectorizer()
+    vectorizer = TfidfVectorizer(stop_words="english")
 
     # TF-IDF 행렬 계산
     tfidf_matrix = vectorizer.fit_transform(articles)
@@ -65,12 +93,28 @@ def cal_trend():
     # TF-IDF 점수 기준으로 내림차순 정렬
     word_tfidf_tuples.sort(key=lambda x: x[1], reverse=True)
 
-    # 상위 20개 단어 출력
+    return word_tfidf_tuples
+
+
+# 상위 단어 40개 출력
+def print_tfidf(word_tfidf_tuples):
     print("{:<15} {}".format("단어", "TF-IDF 점수"))
     print("=" * 30)
-    for term, score in word_tfidf_tuples[:20]:
+    for term, score in word_tfidf_tuples[:40]:
         print("{:<15} {:.2f}".format(term, score))
-    
-    return word_tfidf_tuples[:20]
 
-print(cal_trend())
+
+def create_secure_trend():
+    links = collect_links()
+    articles = extract_descriptions(links)
+    translated = translate_for_tfidf(articles)
+    tfidf = cal_tfidf(translated)
+    print_tfidf(tfidf)
+
+
+def main():
+    create_secure_trend()
+
+
+if __name__ == "__main__":
+    main()
