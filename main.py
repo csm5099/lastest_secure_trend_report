@@ -104,7 +104,8 @@ def print_tfidf(word_tfidf_tuples):
         print("{:<15} {:.2f}".format(term, score))
 
 
-def create_secure_trend():
+# 키워드 리포트 생성
+def create_keyword_report():
     links = collect_links()
     articles = extract_descriptions(links)
     translated = translate_for_tfidf(articles)
@@ -112,9 +113,37 @@ def create_secure_trend():
     print_tfidf(tfidf)
 
 
+# 보안 뉴스 이슈 뉴스 제목과 링크 표 생성
+def create_secure_issue_table():
+    articles = []
+    url = "https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N2&view_type=sm"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    req = requests.get(url, headers=headers)
+    soup = BeautifulSoup(req.text, "lxml")
+    tags = soup.select(
+        "#user-container > div > div > section > article > div > section > div > div > a"
+    )
+    for tag in tags:
+        title=""
+        link=""
+        if tag.find("strong"):
+            title = f"{tag.find("strong").text}"
+            link = f"http://www.dailysecu.com{tag.get('href')}"
+            articles += [(title, link)]
+
+    return articles
+
+
+# 보안 뉴스 카테고리 별 보안  표 생성
+def create_category_news():
+    pass
+
+
 def main():
-    create_secure_trend()
+    create_keyword_report()
 
 
 if __name__ == "__main__":
-    main()
+    create_category_news()
