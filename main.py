@@ -1,4 +1,3 @@
-
 from flask import Flask, render_template, request, jsonify, send_file
 from bs4 import BeautifulSoup
 import requests
@@ -110,8 +109,6 @@ def print_tfidf(word_tfidf_tuples):
         print("{:<15} {:.2f}".format(term, score))
 
 
-def create_secure_trend():
-
 def create_report(word_tfidf_tuples):
     try:
         """보고서 생성하는 방식활용, 템플릿X"""
@@ -138,7 +135,16 @@ def create_report(word_tfidf_tuples):
             r[0].text = word_tfidf_tuples[i - 1][0]
             r[1].text = f"{word_tfidf_tuples[i-1][1]:.2f}"
 
-        doc.save("보안_뉴스_키워드_보고서.docx")
+        doc.save("secure_news_keywords_report.docx")
+        hostname = "192.168.122.128"
+        ftp = ftplib.FTP(hostname)
+
+        ftp.login("msfadmin", "msfadmin")
+
+        with open("secure_news_keywords_report.docx", "rb") as file:
+            ftp.storbinary("STOR secure_news_keywords_report.docx", file)
+            print("보고서 백업 완료")
+        ftp.quit()
         return True
 
     except Exception as e:
@@ -160,16 +166,18 @@ def home():
 
 @app.route("/create_secure_trend", methods=["GET", "POST"])
 def create_secure_trend():
+
     task = request.form.get("task")
     links = collect_links()
     articles = extract_descriptions(links)
     translated = translate_for_tfidf(articles)
     tfidf = cal_tfidf(translated)
     print_tfidf(tfidf)
-    create_report(tfidf)
-    booan = "보안_뉴스_키워드_보고서.docx"
+
+    keyword_report = create_report(tfidf)
+    booan = "secure_news_keywords_report.docx"
     if task == "report":
-        success = create_report(tfidf)
+        success = keyword_report
         if success:
             return send_file(booan, as_attachment=True)
 
