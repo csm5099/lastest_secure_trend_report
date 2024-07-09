@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, jsonify, send_file
 from bs4 import BeautifulSoup
 import requests
@@ -5,6 +6,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
 from docx import Document
 from datetime import datetime
+import ftplib
 import time
 
 
@@ -41,6 +43,7 @@ def extract_descriptions(links):
                 continue
             p += p_tag.text.strip()
         articles.append(str(p))
+
     return articles
 
 
@@ -106,6 +109,8 @@ def print_tfidf(word_tfidf_tuples):
     for term, score in word_tfidf_tuples[:40]:
         print("{:<15} {:.2f}".format(term, score))
 
+
+def create_secure_trend():
 
 def create_report(word_tfidf_tuples):
     try:
