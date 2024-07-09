@@ -46,7 +46,8 @@ def mail_sender(result_docx):
     smtp.quit()
 
 result_docx = '임해윤_certificate.docx'
-def schedule_mail():
-    schedule.every(1).minutes.do(mail_sender(result_docx))
+def main() :
+   mail_sender(result_docx)
 
-schedule_mail()
+if __name__ == "__main__":
+    main()
