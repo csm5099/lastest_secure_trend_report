@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
-
 from docx import Document
 from datetime import datetime
 import time
@@ -17,7 +16,7 @@ def collect_links():
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
     }
-    for i in range(1, 11):
+    for i in range(1, 2):
         outter_url = f"http://www.dailysecu.com/news/articleList.html?page={i}&total=13290&box_idxno=&sc_section_code=S1N2&view_type=sm"
         outter_req = requests.get(outter_url, headers=headers)
         outter_soup = BeautifulSoup(outter_req.text, "lxml")
@@ -110,7 +109,7 @@ def print_tfidf(word_tfidf_tuples):
     for term, score in word_tfidf_tuples[:40]:
         print("{:<15} {:.2f}".format(term, score))
 
-
+# 보고서 생성
 def create_report(word_tfidf_tuples):
     try:
         """보고서 생성하는 방식활용, 템플릿X"""
@@ -153,6 +152,63 @@ def create_report(word_tfidf_tuples):
         print(f"실패 이유 {e}")
         return False
 
+# 보안 뉴스 이슈 뉴스 제목과 링크 표 생성
+def create_secure_issue_table():
+    articles = []
+    url = "https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N2&view_type=sm"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    req = requests.get(url, headers=headers)
+    soup = BeautifulSoup(req.text, "lxml")
+    tags = soup.select(
+        "#user-container > div > div > section > article > div > section > div > div > a"
+    )
+    for tag in tags:
+        title=""
+        link=""
+        if tag.find("strong"):
+            title = f"{tag.find("strong").text}"
+            link = f"http://www.dailysecu.com{tag.get('href')}"
+            articles += [(title, link)]
+
+    return articles
+
+
+# 보안 뉴스 카테고리 별 보안  표 생성
+def create_category_news():
+    industry_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N3&view_type=sm"
+    policy_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N4&view_type=sm"
+    overseas_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N5&view_type=sm"
+    itlife_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N6&view_type=sm"
+    categories=[industry_url,policy_url,overseas_url,itlife_url]
+    
+    articles = [[],[],[],[]]
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    for index, category_url in enumerate(categories):
+        req = requests.get(category_url, headers=headers)
+        soup = BeautifulSoup(req.text, "lxml")
+        tags = soup.select("#user-container > div > div > section > article > div > section > div > div > a")
+        
+        for tag in tags:
+            title=""
+            link=""
+            if tag.find("strong"):
+                title = f"{tag.find("strong").text}"
+                link = f"http://www.dailysecu.com{tag.get('href')}"
+                articles[index] += [(title, link)]
+                print(articles)
+    """
+    0 산업
+    1 정쳑
+    2 해외
+    3 it, 생활
+    [[0][1][2][3]]
+    """
+    return articles
 
 def main():
     app.run(debug=True)
@@ -185,9 +241,7 @@ def create_secure_trend():
 
 
 def main():
-    app.run(debug=True, host="0.0.0.0", port=5000)
-    create_secure_trend()
-    create_keyword_report()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
