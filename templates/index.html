@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>제목</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+</head><!--위의 링크는 style.css 파일을 불러와서 조금 더 예쁘게 보이기 위해 사용-->
+<body>
+    <h1>제목</h1>
+    <form action="/report" method="post">
+        <div>
+            <input type="radio" id="option1" name="option1" value="Option 1">
+            <label for="option1">옵션 1</label>
+        </div>
+        <div>
+            <input type="radio" id="option2" name="option2" value="Option 2">
+            <label for="option2">옵션 2</label>
+        </div>
+        <div>
+            <input type="radio" id="option3" name="option3" value="Option 3">
+            <label for="option3">옵션 3</label>
+        </div>
+        <button type="submit">보고서 작성</button>
+    </form>
+</body>
+</html>
