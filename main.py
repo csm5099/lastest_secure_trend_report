@@ -1,14 +1,17 @@
-from flask import Flask, render_template, request, jsonify, send_file
+from flask import Flask, render_template, request, send_file
 from bs4 import BeautifulSoup
-import requests
+import requests, re, os
 from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
 from docx import Document
 from datetime import datetime
-import time
+from dotenv import load_dotenv
 import ftplib
-import time
-
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication 
+import schedule
 
 # 뉴스 페이지를 순회하며 뉴스의 링크를 수집
 def collect_links():
@@ -210,6 +213,44 @@ def create_category_news():
     """
     return articles
 
+#arg result_docx는 동향 정보가 담긴 docx명 
+def mail_sender(result_docx):
+    now = datetime.now()
+    day = now.strftime("%Y-%m-%d")
+    load_dotenv()
+    SECRET_ID = os.getenv("SECRET_ID")
+    SECRET_PASS = os.getenv("SECRET_PASS")
+
+    smtp = smtplib.SMTP('smtp.naver.com', 587)
+    smtp.ehlo()
+    smtp.starttls()
+
+    smtp.login(SECRET_ID,SECRET_PASS)
+    
+    send_email = "csm5099@naver.com"
+    recv_email = "csm5099@gmail.com"
+
+    msg = MIMEMultipart()
+    msg['Subject'] = f"[{day}] 일간 정보 보안 동향"  
+    msg['From'] = send_email          
+    msg['To'] = recv_email      
+
+    text = f"안녕하세요\n {day} 일간 정보 보안 동향 워드 파일로 정리하여 보내드립니다."      
+    contentPart = MIMEText(text) 
+    msg.attach(contentPart)     
+
+    file_name = result_docx
+    with open(file_name, 'rb') as f : 
+        etc_part = MIMEApplication( f.read() )
+        etc_part.add_header('Content-Disposition','attachment', filename=f'[{day}]latest_secure_trend.docx')
+        msg.attach(etc_part)
+
+    email_string = msg.as_string()
+    print(email_string)
+
+    smtp.sendmail(send_email, recv_email, email_string)
+    smtp.quit()
+
 def main():
     app.run(debug=True)
 
@@ -234,15 +275,11 @@ def create_secure_trend():
 
     keyword_report = create_report(tfidf)
     booan = "secure_news_keywords_report.docx"
+    mail_sender(booan)
     if task == "report":
         success = keyword_report
         if success:
             return send_file(booan, as_attachment=True)
-
-
-def main():
-    app.run(debug=True)
-
 
 if __name__ == "__main__":
     main()
