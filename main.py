@@ -3,8 +3,10 @@ from bs4 import BeautifulSoup
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
+
 from docx import Document
 from datetime import datetime
+import time
 import ftplib
 import time
 
@@ -180,6 +182,12 @@ def create_secure_trend():
         success = keyword_report
         if success:
             return send_file(booan, as_attachment=True)
+
+
+def main():
+    app.run(debug=True, host="0.0.0.0", port=5000)
+    create_secure_trend()
+    create_keyword_report()
 
 
 if __name__ == "__main__":
