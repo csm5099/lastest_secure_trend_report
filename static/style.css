@@ -1,0 +1,80 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+h1 {
+    color: #333;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #f5f5f5;
+}
+
+button {
+    color: #ffffff;
+    font-weight: bolder;
+    text-align: center;
+    background-color: darkolivegreen;
+    height: 40px;
+    width: 100px;
+    border: none;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: olive;
+}
+
+.headtitle {
+    color: #ffffff;
+    font-size: 35px;
+    background-color: rgba(0, 0, 0, 0.7);
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.becontainer {
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    text-align: center;
+    width: 300px;
+}
+
+.beitem {
+    margin: 10px 0;
+}
+
+.backimg {
+    background: url("{{ url_for('static', filename='image/back1.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
