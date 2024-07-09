@@ -18,7 +18,7 @@ def ftp_files():
         ftp.login(ftp_user, ftp_pass)
         files = ftp.nlst()
         ftp.quit()
-        return render_template('index.html', files=files)
+        return render_template('index_ftp.html', files=files)
     except ftplib.all_errors as e:
         return f"FTP 오류: {e}"
 
