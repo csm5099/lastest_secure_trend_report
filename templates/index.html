@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Trend Report</title>
+    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='style.css')}}">
+
+</head>
+<body>
+    <div class="backimg">
+        <div class="headtitle">
+            <h1>Generate Trend Report</h1>
+        </div>
+        <form action="{{ url_for('create_secure_trend') }}" method="POST" >
+            <div class="container">
+                <input type="radio" id="report" name="task" value="report" class="beitem">
+                <label for="report" class="txt">Generate Word Report</label><br>
+                <input type="radio" id="keywords" name="task" value="keywords" class="beitem">
+                <label for="keywords" class="txt">Print Keywords</label><br>
+                <input type="radio" id="categories" name="task" value="categories" class="beitem">
+                <label for="categories" class="txt">Print Categories</label><br>
+            </div>
+                <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>
