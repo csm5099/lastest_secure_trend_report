@@ -4,10 +4,17 @@ from bs4 import BeautifulSoup
 import requests
 from sklearn.feature_extraction.text import TfidfVectorizer
 from googletrans import Translator
+
 from docx import Document
 from datetime import datetime
-import ftplib
 import time
+import ftplib
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return render_template('index.html')
 
 
 # 뉴스 페이지를 순회하며 뉴스의 링크를 수집
@@ -110,69 +117,130 @@ def print_tfidf(word_tfidf_tuples):
         print("{:<15} {:.2f}".format(term, score))
 
 
-def create_secure_trend():
-
-def create_report(word_tfidf_tuples):
-    try:
-        """보고서 생성하는 방식활용, 템플릿X"""
-        # print(word_tfidf_tuples)
-        # 워드 보고서 생성
-        doc = Document()
-        doc.add_heading("Latest Keywords of Secure Infomation ", level=0)
-        # 날짜 데이터 가져오기
-        now = datetime.now()
-        day = now.strftime("%Y-%m-%d")
-        doc.add_paragraph(day)
-
-        """"-------------------워드에 테이블 삽입---------------------"""
-        length = 40  # 상위 몇개의 단어를 가지고 오고 싶은지...?
-
-        table = doc.add_table(rows=length + 1, cols=2)
-        table.style = doc.styles["Table Grid"]
-        header = table.rows[0].cells
-        header[0].text = "Keywords"
-        header[1].text = "Frequency"
-
-        for i in range(1, length + 1):
-            r = table.rows[i].cells
-            r[0].text = word_tfidf_tuples[i - 1][0]
-            r[1].text = f"{word_tfidf_tuples[i-1][1]:.2f}"
-
-        doc.save("보안_뉴스_키워드_보고서.docx")
-        return True
-
-    except Exception as e:
-        print(f"실패 이유 {e}")
-        return False
-
-
-def main():
-    app.run(debug=True)
-
-
-app = Flask(__name__)
-
-
-@app.route("/")
-def home():
-    return render_template("index.html")
-
-
-@app.route("/create_secure_trend", methods=["GET", "POST"])
-def create_secure_trend():
-    task = request.form.get("task")
+# 키워드 리포트 생성
+def create_keyword_report():
     links = collect_links()
     articles = extract_descriptions(links)
     translated = translate_for_tfidf(articles)
     tfidf = cal_tfidf(translated)
     print_tfidf(tfidf)
-    create_report(tfidf)
-    booan = "보안_뉴스_키워드_보고서.docx"
-    if task == "report":
-        success = create_report(tfidf)
+    
+def dhodkseho(word_tfidf_tuples):
+    try:
+        """보고서 생성하는 방식활용, 템플릿X"""
+        #print(word_tfidf_tuples)
+        # 워드 보고서 생성
+        doc = Document()
+        doc.add_heading("Latest Keywords of Secure Infomation ", level=0)
+        # 날짜 데이터 가져오기
+        now = datetime.now()
+        day = now.strftime('%Y-%m-%d')
+        doc.add_paragraph(day)
+
+        """"-------------------워드에 테이블 삽입---------------------"""
+        length = 40  #상위 몇개의 단어를 가지고 오고 싶은지...?
+
+        table = doc.add_table(rows = length+1, cols = 2)
+        table.style = doc.styles['Table Grid']
+        header = table.rows[0].cells
+        header[0].text = 'Keywords'
+        header[1].text = 'Frequency'
+
+
+        for i in range(1, length+1):
+            r = table.rows[i].cells
+            r[0].text = word_tfidf_tuples[i-1][0]
+            r[1].text = f"{word_tfidf_tuples[i-1][1]:.2f}"
+
+        doc.save('보안_뉴스_키워드_보고서.docx')
+        hostname = "192.168.217.128"
+        ftp = ftplib.FTP(hostname)
+
+        ftp.login('msfadmin', 'msfadmin')
+        
+        with open('보안_뉴스_키워드_보고서.docx', 'rb') as file:
+            ftp.storbinary('STOR 보안_뉴스_키워드_보고서.docx', file)
+
+        ftp.quit() 
+        return True 
+    
+    # 보안 뉴스 이슈 뉴스 제목과 링크 표 생성
+def create_secure_issue_table():
+    articles = []
+    url = "https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N2&view_type=sm"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    req = requests.get(url, headers=headers)
+    soup = BeautifulSoup(req.text, "lxml")
+    tags = soup.select(
+        "#user-container > div > div > section > article > div > section > div > div > a"
+    )
+    for tag in tags:
+        title=""
+        link=""
+        if tag.find("strong"):
+            title = f"{tag.find("strong").text}"
+            link = f"http://www.dailysecu.com{tag.get('href')}"
+            articles += [(title, link)]
+
+    return articles
+
+
+# 보안 뉴스 카테고리 별 보안  표 생성
+def create_category_news():
+    industry_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N3&view_type=sm"
+    policy_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N4&view_type=sm"
+    overseas_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N5&view_type=sm"
+    itlife_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N6&view_type=sm"
+    categories=[industry_url,policy_url,overseas_url,itlife_url]
+    
+    articles = [[],[],[],[]]
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    for index, category_url in enumerate(categories):
+        req = requests.get(category_url, headers=headers)
+        soup = BeautifulSoup(req.text, "lxml")
+        tags = soup.select("#user-container > div > div > section > article > div > section > div > div > a")
+        
+        for tag in tags:
+            title=""
+            link=""
+            if tag.find("strong"):
+                title = f"{tag.find("strong").text}"
+                link = f"http://www.dailysecu.com{tag.get('href')}"
+                articles[index] += [(title, link)]
+                print(articles)
+    """
+    0 산업
+    1 정쳑
+    2 해외
+    3 it, 생활
+    [[0][1][2][3]]
+    """
+    return articles
+    
+
+    except Exception as e:
+        print(f'실패 이유 {e}')
+        return False
+    
+@app.route('/create_secure_trend', methods=['GET', 'POST'])
+def create_secure_trend():
+    task = request.form.get("task")
+    dhodkseho(tfidf)
+    booan = '보안_뉴스_키워드_보고서.docx'
+    if task == 'report':
+        success = dhodkseho(tfidf)
         if success:
             return send_file(booan, as_attachment=True)
 
+def main():
+    app.run(debug=True, host='0.0.0.0', port=5000)
+    create_secure_trend()
+    create_keyword_report()
 
 if __name__ == "__main__":
     main()
