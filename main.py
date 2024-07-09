@@ -9,6 +9,11 @@ import time
 
 app = Flask(__name__)
 
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+
 # 뉴스 페이지를 순회하며 뉴스의 링크를 수집
 def collect_links():
     links = []
@@ -24,6 +29,7 @@ def collect_links():
         )
         links += [f"http://www.dailysecu.com{tag.get('href')}" for tag in outter_tags]
     return links
+
 
 # 뉴스의 본문을 수집
 def extract_descriptions(links):
@@ -42,11 +48,12 @@ def extract_descriptions(links):
                 continue
             p += p_tag.text.strip()
         articles.append(str(p))
-        i += 1
+        i +=1
         if i == 10:
             break
 
     return articles
+
 
 # tf-idf를 위해 내용을 영어로 번역함
 def translate_for_tfidf(articles):
@@ -77,10 +84,8 @@ def translate_for_tfidf(articles):
         except Exception as e:
             print(f"An error occurred: {e}")
 
-        # 0.5초 대기
-        time.sleep(0.5)
-
     return articles
+
 
 # 단어의 중요도를 평가하기위한 tf-idf
 def cal_tfidf(articles):
@@ -104,6 +109,7 @@ def cal_tfidf(articles):
 
     return word_tfidf_tuples
 
+
 # 상위 단어 40개 출력
 def print_tfidf(word_tfidf_tuples):
     print("{:<15} {}".format("단어", "TF-IDF 점수"))
@@ -111,96 +117,59 @@ def print_tfidf(word_tfidf_tuples):
     for term, score in word_tfidf_tuples[:40]:
         print("{:<15} {:.2f}".format(term, score))
 
-# 보고서 작성
 def dhodkseho(word_tfidf_tuples):
     try:
-        print(word_tfidf_tuples)
-        # 워드 보고서 템플릿 열기
-        doc = Document("template.docx")
-        name = '8조 무한궤도'
+        """보고서 생성하는 방식활용, 템플릿X"""
+        #print(word_tfidf_tuples)
+        # 워드 보고서 생성
+        doc = Document()
+        doc.add_heading("Latest Keywords of Secure Infomation ", level=0)
         # 날짜 데이터 가져오기
         now = datetime.now()
         day = now.strftime('%Y-%m-%d')
+        doc.add_paragraph(day)
 
-        with open('tt.txt', 'w', encoding='utf-8') as File:
-            # 상위 20개 단어 출력
-            print("{:<15} {}".format("단어", "TF-IDF 점수"))
-            print("=" * 30)
+        """"-------------------워드에 테이블 삽입---------------------"""
+        length = 40  #상위 몇개의 단어를 가지고 오고 싶은지...?
 
-            for term, score in word_tfidf_tuples[:40]:
-                print("{:<15} {:.2f}".format(term, score))
-                File.write('{:<15}\t{:.2f}\n'.format(term, score))
+        table = doc.add_table(rows = length+1, cols = 2)
+        table.style = doc.styles['Table Grid']
+        header = table.rows[0].cells
+        header[0].text = 'Keywords'
+        header[1].text = 'Frequency'
 
-        with open('tt.txt', 'r', encoding='utf-8') as file:
-            lines = file.readlines()
-            i = 0
-            # 돌면서 단어 추가
-            for line in lines:
-                paragraphs = doc.paragraphs
-                for paragraph in doc.paragraphs:
-                    if 'DATE' in paragraph.text:
-                        paragraph.text = paragraph.text.replace('DATE', day)
-                    if 'NAME' in paragraph.text:
-                        paragraph.text = paragraph.text.replace('NAME', name)
-                
-                # course 변수를 올바른 단락으로 설정
-                course = paragraphs[6]
-                
-                # course.text가 정확히 'COURSE'인지 확인
-                if 'COURSE' in course.text:
-                    new_run = course.add_run(f'\n{line.strip()}\n')
-                    i += 1
 
-            if i >= len(lines):
-                course.text = course.text.replace('COURSE', '')
-                course.add_run('\n' + '=' * 30 + '\n')
+        for i in range(1, length+1):
+            r = table.rows[i].cells
+            r[0].text = word_tfidf_tuples[i-1][0]
+            r[1].text = f"{word_tfidf_tuples[i-1][1]:.2f}"
 
-            doc.save('보안_뉴스_키워드_보고서.docx')
-            # 성공 시 True 값 리턴
-            return True
-        
+        doc.save('보안_뉴스_키워드_보고서.docx') 
+        return True 
+    
     except Exception as e:
         print(f'실패 이유 {e}')
         return False
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-@app.route('/generate-trend', methods=['GET', 'POST'])
-def generate_trend():
-    task = request.form.get('task')
+    
+@app.route('/create_secure_trend', methods=['GET', 'POST'])
+def create_secure_trend():
+    task = request.form.get("task")
     links = collect_links()
     articles = extract_descriptions(links)
     translated = translate_for_tfidf(articles)
     tfidf = cal_tfidf(translated)
-    
+    print_tfidf(tfidf)
+    dhodkseho(tfidf)
+    booan = '보안_뉴스_키워드_보고서.docx'
     if task == 'report':
         success = dhodkseho(tfidf)
         if success:
-            return send_file('보안_뉴스_키워드_보고서.docx', as_attachment=True)
-    
-def categorize_titles(links):
-    categories = {}
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
-    }
-    for link in links:
-        inner_req = requests.get(link, headers=headers)
-        inner_soup = BeautifulSoup(inner_req.text, "lxml")
-        title_tag = inner_soup.select_one("h3.tit_view")
-        if title_tag:
-            title = title_tag.text.strip()
-            category_tag = inner_soup.select_one("em.media_end_categorization")
-            if category_tag:
-                category = category_tag.text.strip()
-                if category not in categories:
-                    categories[category] = []
-                categories[category].append(title)
-    return categories
+            return send_file(booan, as_attachment=True)
 
 def main():
     app.run(debug=True, host='0.0.0.0', port=5000)
+    create_secure_trend()
+
 
 if __name__ == "__main__":
     main()
