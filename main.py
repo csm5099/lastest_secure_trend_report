@@ -138,8 +138,39 @@ def create_secure_issue_table():
 
 # 보안 뉴스 카테고리 별 보안  표 생성
 def create_category_news():
-    pass
+    industry_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N3&view_type=sm"
+    policy_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N4&view_type=sm"
+    overseas_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N5&view_type=sm"
+    itlife_url="https://www.dailysecu.com/news/articleList.html?sc_section_code=S1N6&view_type=sm"
+    categories=[industry_url,policy_url,overseas_url,itlife_url]
+    
+    articles = [[],[],[],[]]
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
+    }
+    for index, category_url in enumerate(categories):
+        req = requests.get(category_url, headers=headers)
+        soup = BeautifulSoup(req.text, "lxml")
+        tags = soup.select("#user-container > div > div > section > article > div > section > div > div > a")
+        
+        for tag in tags:
+            title=""
+            link=""
+            if tag.find("strong"):
+                title = f"{tag.find("strong").text}"
+                link = f"http://www.dailysecu.com{tag.get('href')}"
+                articles[index] += [(title, link)]
+                print(articles)
+    """
+    0 산업
+    1 정쳑
+    2 해외
+    3 it, 생활
+    [[0][1][2][3]]
+    """
+    return articles
+    
 
 def main():
     create_keyword_report()
