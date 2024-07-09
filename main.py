@@ -16,6 +16,10 @@ def report():
         option3 = request.form.get('option3')
 
         doc = Document("test.docx")  # 사용할 docx파일 이름 기입
+        if option1:
+            
+            pass
+
         for paragraph in doc.paragraphs:
             if 'option1' in paragraph.text:
                 paragraph.text = paragraph.text.replace('option1', option1)
