@@ -1,31 +1,96 @@
-/* CSS 스타일을 여기에 추가하세요 */
 body {
     font-family: Arial, sans-serif;
-    }
-    
-    h1 {
-    color: #333;
-    }
-    
-    table {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: whitesmoke;
+}
+
+h1 {
+    color: honeydew;
+}
+
+table {
     border-collapse: collapse;
     width: 100%;
-    }
-    
-    th, td {
+}
+
+th, td {
     border: 1px solid #ddd;
     padding: 8px;
     text-align: left;
-    }
-    
-    th {
+}
+
+th {
     background-color: #f2f2f2;
-    }
-    
-    tr:nth-child(even) {
+}
+
+tr:nth-child(even) {
     background-color: #f9f9f9;
-    }
-    
-    tr:hover {
+}
+
+tr:hover {
     background-color: #f5f5f5;
-    }
+}
+
+button {
+    color: #ffffff;
+    font-weight: bolder;
+    text-align: center;
+    border-radius: 10px;
+    background-color: darkolivegreen;
+    height: 45px;
+    width: 100px;
+    border: none;
+    cursor: pointer;
+    margin: 15px;
+    position: relative;
+    left: 700px;
+}
+
+button:hover {
+    background-color: olive;
+}
+
+.headtitle {
+    color: #ffffff;
+    font-size: 35px;
+    background-color: rgba(0, 0, 0, 0.7);
+    text-align: center;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.container {
+    width: 800px;
+    height: 100px;
+    /* border: 4px solid; */
+    justify-content: space-around;	
+    display: table-column 35px;
+    text-align: center;
+    padding: 20px;
+  }
+  
+
+
+.beitem {
+    margin: 10px 0;
+    text-align: center;
+    border-bottom-left-radius: 35px;
+    margin: 25px;
+    grid-template-columns: 30px 100px;
+}
+
+.txt{
+    font-weight: bolder;
+}
+
+.backimg {
+    background: url("{{ url_for('static', filename='image/back1.jpg') }}") no-repeat center center fixed;
+    background-size: cover;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
