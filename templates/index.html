@@ -7,7 +7,7 @@
 </head>
 <body>
     <h1>Generate Trend Report</h1>
-    <form action="{{ url_for('generate_trend') }}" method="POST">
+    <form action="{{ url_for('create_secure_trend') }}" method="POST">
         <input type="radio" id="report" name="task" value="report">
         <label for="report">Generate Word Report</label><br>
         <input type="radio" id="keywords" name="task" value="keywords">

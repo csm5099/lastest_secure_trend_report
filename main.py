@@ -7,12 +7,6 @@ from docx import Document
 from datetime import datetime
 import time
 
-app = Flask(__name__)
-
-@app.route('/')
-def home():
-    return render_template('index.html')
-
 
 # 뉴스 페이지를 순회하며 뉴스의 링크를 수집
 def collect_links():
@@ -36,7 +30,6 @@ def extract_descriptions(links):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.118 Safari/537.36"
     }
-    i = 0
     articles = []
     for link in links:
         inner_req = requests.get(link, headers=headers)
@@ -48,10 +41,6 @@ def extract_descriptions(links):
                 continue
             p += p_tag.text.strip()
         articles.append(str(p))
-        i +=1
-        if i == 10:
-            break
-
     return articles
 
 
@@ -117,41 +106,54 @@ def print_tfidf(word_tfidf_tuples):
     for term, score in word_tfidf_tuples[:40]:
         print("{:<15} {:.2f}".format(term, score))
 
-def dhodkseho(word_tfidf_tuples):
+
+def create_report(word_tfidf_tuples):
     try:
         """보고서 생성하는 방식활용, 템플릿X"""
-        #print(word_tfidf_tuples)
+        # print(word_tfidf_tuples)
         # 워드 보고서 생성
         doc = Document()
         doc.add_heading("Latest Keywords of Secure Infomation ", level=0)
         # 날짜 데이터 가져오기
         now = datetime.now()
-        day = now.strftime('%Y-%m-%d')
+        day = now.strftime("%Y-%m-%d")
         doc.add_paragraph(day)
 
         """"-------------------워드에 테이블 삽입---------------------"""
-        length = 40  #상위 몇개의 단어를 가지고 오고 싶은지...?
+        length = 40  # 상위 몇개의 단어를 가지고 오고 싶은지...?
 
-        table = doc.add_table(rows = length+1, cols = 2)
-        table.style = doc.styles['Table Grid']
+        table = doc.add_table(rows=length + 1, cols=2)
+        table.style = doc.styles["Table Grid"]
         header = table.rows[0].cells
-        header[0].text = 'Keywords'
-        header[1].text = 'Frequency'
+        header[0].text = "Keywords"
+        header[1].text = "Frequency"
 
-
-        for i in range(1, length+1):
+        for i in range(1, length + 1):
             r = table.rows[i].cells
-            r[0].text = word_tfidf_tuples[i-1][0]
+            r[0].text = word_tfidf_tuples[i - 1][0]
             r[1].text = f"{word_tfidf_tuples[i-1][1]:.2f}"
 
-        doc.save('보안_뉴스_키워드_보고서.docx') 
-        return True 
-    
+        doc.save("보안_뉴스_키워드_보고서.docx")
+        return True
+
     except Exception as e:
-        print(f'실패 이유 {e}')
+        print(f"실패 이유 {e}")
         return False
-    
-@app.route('/create_secure_trend', methods=['GET', 'POST'])
+
+
+def main():
+    app.run(debug=True)
+
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/create_secure_trend", methods=["GET", "POST"])
 def create_secure_trend():
     task = request.form.get("task")
     links = collect_links()
@@ -159,16 +161,12 @@ def create_secure_trend():
     translated = translate_for_tfidf(articles)
     tfidf = cal_tfidf(translated)
     print_tfidf(tfidf)
-    dhodkseho(tfidf)
-    booan = '보안_뉴스_키워드_보고서.docx'
-    if task == 'report':
-        success = dhodkseho(tfidf)
+    create_report(tfidf)
+    booan = "보안_뉴스_키워드_보고서.docx"
+    if task == "report":
+        success = create_report(tfidf)
         if success:
             return send_file(booan, as_attachment=True)
-
-def main():
-    app.run(debug=True, host='0.0.0.0', port=5000)
-    create_secure_trend()
 
 
 if __name__ == "__main__":
